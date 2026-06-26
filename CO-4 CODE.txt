@@ -1,0 +1,118 @@
+import java.util.*;
+
+class Edge {
+    String destination;
+    int fare;
+    int time;
+
+    Edge(String destination, int fare, int time) {
+        this.destination = destination;
+        this.fare = fare;
+        this.time = time;
+    }
+}
+
+class Node implements Comparable<Node> {
+    String station;
+    int fare;
+    int time;
+
+    Node(String station, int fare, int time) {
+        this.station = station;
+        this.fare = fare;
+        this.time = time;
+    }
+
+    @Override
+    public int compareTo(Node other) {
+        if (this.fare != other.fare)
+            return this.fare - other.fare;
+        return this.time - other.time;
+    }
+}
+
+public class MetroDijkstra {
+
+    static Map<String, List<Edge>> graph = new HashMap<>();
+
+    static void addEdge(String from, String to, int fare, int time) {
+        graph.computeIfAbsent(from, k -> new ArrayList<>()).add(new Edge(to, fare, time));
+        graph.computeIfAbsent(to, k -> new ArrayList<>()).add(new Edge(from, fare, time));
+    }
+
+    public static void main(String[] args) {
+
+        addEdge("ALD", "AVN", 10, 5);
+        addEdge("ALD", "CMR", 8, 7);
+        addEdge("AVN", "GTM", 3, 5);
+        addEdge("CMR", "GTM", 5, 3);
+        addEdge("CMR", "MGR", 6, 2);
+        addEdge("GTM", "TNB", 11, 4);
+        addEdge("MGR", "WMN", 12, 4);
+        addEdge("TNB", "WMN", 2, 2);
+
+        dijkstra("ALD");
+    }
+
+    static void dijkstra(String source) {
+
+        Map<String, Integer> fare = new HashMap<>();
+        Map<String, Integer> time = new HashMap<>();
+        Map<String, String> parent = new HashMap<>();
+
+        for (String station : graph.keySet()) {
+            fare.put(station, Integer.MAX_VALUE);
+            time.put(station, Integer.MAX_VALUE);
+        }
+
+        fare.put(source, 0);
+        time.put(source, 0);
+
+        PriorityQueue<Node> pq = new PriorityQueue<>();
+        pq.add(new Node(source, 0, 0));
+
+        while (!pq.isEmpty()) {
+
+            Node current = pq.poll();
+
+            for (Edge edge : graph.get(current.station)) {
+
+                int newFare = fare.get(current.station) + edge.fare;
+                int newTime = time.get(current.station) + edge.time;
+
+                if (newFare < fare.get(edge.destination)
+                        || (newFare == fare.get(edge.destination)
+                        && newTime < time.get(edge.destination))) {
+
+                    fare.put(edge.destination, newFare);
+                    time.put(edge.destination, newTime);
+                    parent.put(edge.destination, current.station);
+
+                    pq.add(new Node(edge.destination, newFare, newTime));
+                }
+            }
+        }
+
+        System.out.println("Minimum Fare and Time from ALD\n");
+
+        for (String station : fare.keySet()) {
+            System.out.println(station + " -> Fare = ₹" + fare.get(station)
+                    + ", Time = " + time.get(station) + " min");
+        }
+
+        System.out.println("\nPath to WMN:");
+
+        List<String> path = new ArrayList<>();
+        String current = "WMN";
+
+        while (current != null) {
+            path.add(current);
+            current = parent.get(current);
+        }
+
+        Collections.reverse(path);
+
+        for (String s : path)
+            System.out.print(s + " ");
+    }
+}
